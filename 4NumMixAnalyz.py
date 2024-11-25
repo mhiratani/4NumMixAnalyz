@@ -646,19 +646,6 @@ if st.button('選択した数字の重複回数の割合'):
         st.write(f"数字 {selected_digit} の重複回数の割合:")
         st.write(result_df)
 
-        # 結果をグラフで表示
-        fig, ax = plt.subplots(figsize=(12, 6))
-        result_df.plot(x='timestamp', y=['percentage_1', 'percentage_2', 'percentage_3', 'percentage_4'], 
-                       kind='bar', stacked=True, ax=ax)
-        plt.title(f"数字 {selected_digit} の重複回数の割合")
-        plt.xlabel("Timestamp")
-        plt.ylabel("割合 (%)")
-        plt.legend(["1回出現", "2回出現", "3回出現", "4回出現"])
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        
-        st.pyplot(fig)
-
         # 全期間での平均割合
         avg_percentages = result_df[['percentage_1', 'percentage_2', 'percentage_3', 'percentage_4']].mean()
         
