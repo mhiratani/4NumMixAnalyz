@@ -540,8 +540,16 @@ if st.button('検索'):
 
 # 各数字のtimestampごとの累積出現回数と割合
 if st.button('各数字のtimestampごとの累積出現回数と割合'):
+    # データの中身を確認
+    st.write("データサンプル:")
+    st.write(df.head())
+    
+    # digits列の形式を確認
+    st.write("digits列の形式:")
+    st.write(df['digits'].head())
+
     # 各timestampで各数字が出現したかどうかを記録
-    digit_occurrences = df.apply(lambda row: pd.Series([int(d) in set(row['digits']) for d in range(10)]), axis=1)
+    digit_occurrences = df.apply(lambda row: pd.Series({str(d): str(d) in row['digits'] for d in range(10)}), axis=1)
     
     # 累積出現回数を計算
     cumulative_counts = digit_occurrences.cumsum()
@@ -564,17 +572,21 @@ if st.button('各数字のtimestampごとの累積出現回数と割合'):
     st.write("各数字の累積出現回数と割合:")
     st.write(result_df)
     
-    # 棒グラフを作成
-    fig, ax = plt.subplots(figsize=(10, 6))
-    result_df.plot(kind='bar', ax=ax)
-    plt.title("各数字の累積出現回数と割合")
-    plt.xlabel("数字")
-    plt.ylabel("累積出現回数 / 割合(%)")
-    plt.legend(["累積出現回数", "割合(%)"])
-    plt.xticks(rotation=0)
-    
-    # Streamlitで棒グラフを表示
-    st.pyplot(fig)
+    # 結果が全て0の場合、警告を表示
+    if result_df['Cumulative Count'].sum() == 0:
+        st.warning("累積出現回数が全て0です。データの形式や内容を確認してください。")
+    else:
+        # 棒グラフを作成
+        fig, ax = plt.subplots(figsize=(10, 6))
+        result_df.plot(kind='bar', ax=ax)
+        plt.title("各数字の累積出現回数と割合")
+        plt.xlabel("数字")
+        plt.ylabel("累積出現回数 / 割合(%)")
+        plt.legend(["累積出現回数", "割合(%)"])
+        plt.xticks(rotation=0)
+        
+        # Streamlitで棒グラフを表示
+        st.pyplot(fig)
     
     # 累積出現回数の推移を表示
     st.write("累積出現回数の推移:")
