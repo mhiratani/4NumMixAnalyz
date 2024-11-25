@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from collections import Counter
-from datetime import datetime
+import matplotlib.pyplot as plt
 
 data_array = [
   ['2022-12-09 18:00:00', '5486'],
@@ -522,40 +522,144 @@ df['digits'] = df['number'].astype(str).str.zfill(4).apply(list)
 st.title('4桁数字解析アプリ')
 
 # 4つの数字の検索機能
-if st.button('4つの数字を検索'):
-    st.write(df[['timestamp', 'number']])
+st.subheader('4桁の数字を検索')
+search_number = st.text_input('検索したい4桁の数字を入力してください', max_chars=4)
 
-# 各数字のtimestampごとの出現回数
-if st.button('各数字のtimestampごとの出現回数'):
-    for timestamp, group in df.groupby('timestamp'):
-        st.write(f"Timestamp: {timestamp}")
-        digit_counts = Counter([int(digit) for digits in group['digits'] for digit in digits])
-        st.write(dict(digit_counts))
-        st.write("---")
+if st.button('検索'):
+    if len(search_number) == 4 and search_number.isdigit():
+        # 入力された数字に一致するデータを検索
+        result = df[df['number'] == int(search_number)]
+        
+        if not result.empty:
+            st.write('検索結果:')
+            st.write(result[['timestamp', 'number']])
+        else:
+            st.write(f'数字 {search_number} は見つかりませんでした。')
+    else:
+        st.error('正しい4桁の数字を入力してください。')
 
-# 各数字のトータルの出現回数
-if st.button('各数字のトータルの出現回数'):
+# 各数字のtimestampごとの累積出現回数と割合
+if st.button('各数字のtimestampごとの累積出現回数と割合'):
+    # 各timestampで各数字が出現したかどうかを記録
+    digit_occurrences = df.apply(lambda row: pd.Series([int(d) in set(row['digits']) for d in range(10)]), axis=1)
+    
+    # 累積出現回数を計算
+    cumulative_counts = digit_occurrences.cumsum()
+    
+    # 最終的な累積出現回数
+    final_counts = cumulative_counts.iloc[-1]
+    
+    # 総出現回数
+    total_occurrences = final_counts.sum()
+    
+    # 割合を計算
+    percentages = (final_counts / total_occurrences) * 100
+    
+    # 結果をDataFrameにまとめる
+    result_df = pd.DataFrame({
+        'Cumulative Count': final_counts,
+        'Percentage': percentages
+    })
+    
+    st.write("各数字の累積出現回数と割合:")
+    st.write(result_df)
+    
+    # 棒グラフを作成
+    fig, ax = plt.subplots(figsize=(10, 6))
+    result_df.plot(kind='bar', ax=ax)
+    plt.title("各数字の累積出現回数と割合")
+    plt.xlabel("数字")
+    plt.ylabel("累積出現回数 / 割合(%)")
+    plt.legend(["累積出現回数", "割合(%)"])
+    plt.xticks(rotation=0)
+    
+    # Streamlitで棒グラフを表示
+    st.pyplot(fig)
+    
+    # 累積出現回数の推移を表示
+    st.write("累積出現回数の推移:")
+    st.line_chart(cumulative_counts)
+
+# 各数字のトータルの出現回数と割合
+if st.button('各数字のトータルの出現回数と割合'):
     total_counts = Counter([int(digit) for digits in df['digits'] for digit in digits])
-    st.write(dict(total_counts))
+    total_sum = sum(total_counts.values())
+    
+    # 割合を計算
+    percentages = {digit: (count / total_sum) * 100 for digit, count in total_counts.items()}
+    
+    # 結果を表示
+    result_df = pd.DataFrame({
+        'Count': total_counts,
+        'Percentage': percentages
+    }).sort_index()
+    
+    st.write("各数字の出現回数と割合:")
+    st.write(result_df)
+    
+    # 円グラフを作成
+    fig, ax = plt.subplots()
+    ax.pie(percentages.values(), labels=percentages.keys(), autopct='%1.1f%%', startangle=90)
+    ax.axis('equal')  # 円を真円に
+    plt.title("各数字の出現割合")
+    
+    # Streamlitで円グラフを表示
+    st.pyplot(fig)
 
 # ユーザーが指定した数字の重複回数の割合
 selected_digit = st.selectbox('数字を選択してください', range(10))
 
-if st.button('選択した数字の重複割合'):
+if st.button('選択した数字の重複回数の割合'):
     results = []
     for timestamp, group in df.groupby('timestamp'):
-        digit_counts = Counter([int(digit) for digits in group['digits'] for digit in digits])
-        total_digits = sum(digit_counts.values())
-        selected_count = digit_counts[selected_digit]
-        percentage = (selected_count / total_digits) * 100 if total_digits > 0 else 0
-        results.append({
-            'timestamp': timestamp,
-            'count': selected_count,
-            'percentage': percentage
-        })
+        # 選択された数字の出現回数をカウント
+        digit_counts = group['digits'].apply(lambda x: x.count(str(selected_digit)))
+        
+        # 選択された数字が少なくとも1回出現した日のみを対象とする
+        if digit_counts.sum() > 0:
+            total_occurrences = digit_counts.sum()
+            counts = [0] * 4
+            for count in digit_counts:
+                if 1 <= count <= 4:
+                    counts[count-1] += 1
+            
+            results.append({
+                'timestamp': timestamp,
+                'total_occurrences': total_occurrences,
+                'count_1': counts[0],
+                'count_2': counts[1],
+                'count_3': counts[2],
+                'count_4': counts[3],
+                'percentage_1': (counts[0] / len(digit_counts)) * 100,
+                'percentage_2': (counts[1] / len(digit_counts)) * 100,
+                'percentage_3': (counts[2] / len(digit_counts)) * 100,
+                'percentage_4': (counts[3] / len(digit_counts)) * 100
+            })
     
-    result_df = pd.DataFrame(results)
-    st.write(result_df)
+    if results:
+        result_df = pd.DataFrame(results)
+        
+        st.write(f"数字 {selected_digit} の重複回数の割合:")
+        st.write(result_df)
 
-    # 結果をグラフで表示
-    st.line_chart(result_df.set_index('timestamp')['percentage'])
+        # 結果をグラフで表示
+        fig, ax = plt.subplots(figsize=(12, 6))
+        result_df.plot(x='timestamp', y=['percentage_1', 'percentage_2', 'percentage_3', 'percentage_4'], 
+                       kind='bar', stacked=True, ax=ax)
+        plt.title(f"数字 {selected_digit} の重複回数の割合")
+        plt.xlabel("Timestamp")
+        plt.ylabel("割合 (%)")
+        plt.legend(["1回出現", "2回出現", "3回出現", "4回出現"])
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        
+        st.pyplot(fig)
+
+        # 全期間での平均割合
+        avg_percentages = result_df[['percentage_1', 'percentage_2', 'percentage_3', 'percentage_4']].mean()
+        
+        st.write("全期間平均割合:")
+        for i, avg in enumerate(avg_percentages, 1):
+            st.write(f"{i}回出現: {avg:.2f}%")
+    else:
+        st.write(f"数字 {selected_digit} は一度も出現していません。")
