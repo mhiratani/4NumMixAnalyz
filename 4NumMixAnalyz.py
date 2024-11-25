@@ -571,10 +571,10 @@ if st.button('各数字のtimestampごとの累積出現回数と割合'):
         # 棒グラフを作成
         fig, ax = plt.subplots(figsize=(10, 6))
         result_df.plot(kind='bar', ax=ax)
-        plt.title("各数字の累積出現回数と割合")
-        plt.xlabel("数字")
-        plt.ylabel("累積出現回数 / 割合(%)")
-        plt.legend(["累積出現回数", "割合(%)"])
+        plt.title("Cumulative Occurrences and Percentages of Each Digit")
+        plt.xlabel("Digit")
+        plt.ylabel("Cumulative Count / Percentage (%)")
+        plt.legend(["Cumulative Count", "Percentage (%)"])
         plt.xticks(rotation=0)
         
         # Streamlitで棒グラフを表示
@@ -605,7 +605,7 @@ if st.button('各数字のトータルの出現回数と割合'):
     fig, ax = plt.subplots()
     ax.pie(percentages.values(), labels=percentages.keys(), autopct='%1.1f%%', startangle=90)
     ax.axis('equal')  # 円を真円に
-    plt.title("各数字の出現割合")
+    plt.title("Percentage of Each Digit's Occurrence")
     
     # Streamlitで円グラフを表示
     st.pyplot(fig)
