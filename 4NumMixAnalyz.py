@@ -536,9 +536,17 @@ else:
 
 # 4つの数字の検索機能
 st.subheader('4桁の数字を検索')
-search_number = st.text_input('検索したい4桁の数字を入力してください', max_chars=4)
 
-if st.button('検索'):
+# 2つのカラムを作成
+col1, col2 = st.columns([3, 1])  # 比率を3:1に設定
+
+with col1:
+    search_number = st.text_input('検索したい4桁の数字を入力してください', max_chars=4, key='search_input')
+
+with col2:
+    search_button = st.button('検索', key='search_button')
+
+if search_button:
     if len(search_number) == 4 and search_number.isdigit():
         # 入力された数字に一致するデータを検索
         result = df_selected[df_selected['number'] == int(search_number)]
@@ -550,7 +558,6 @@ if st.button('検索'):
             st.write(f'数字 {search_number} は選択された範囲内で見つかりませんでした。')
     else:
         st.error('正しい4桁の数字を入力してください。')
-
 # 各数字のtimestampごとの累積出現回数と割合
 if st.button('各数字のtimestampごとの累積出現回数と割合'):
     # 各timestampで各数字が出現したかどうかを記録
