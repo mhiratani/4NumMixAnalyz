@@ -515,11 +515,24 @@ data_array = [
 # データをDataFrameに変換
 df = pd.DataFrame(data_array, columns=['timestamp', 'number'])
 df['timestamp'] = pd.to_datetime(df['timestamp'])
+df = df.sort_values('timestamp', ascending=False).reset_index(drop=True)
 
 # 4桁の数字を個別の数字に分解
 df['digits'] = df['number'].astype(str).str.zfill(4).apply(list)
 
 st.title('4桁数字解析アプリ')
+
+# データ範囲の選択
+data_range_options = ['5個', '10個', '20個', '30個', '50個', '100個', '全期間']
+selected_range = st.selectbox('データ範囲を選択してください', data_range_options)
+
+if selected_range == '全期間':
+    df_selected = df
+else:
+    n = int(selected_range[:-1])
+    df_selected = df.head(n)
+
+# 以下の各機能で、df の代わりに df_selected を使用
 
 # 4つの数字の検索機能
 st.subheader('4桁の数字を検索')
@@ -528,20 +541,20 @@ search_number = st.text_input('検索したい4桁の数字を入力してくだ
 if st.button('検索'):
     if len(search_number) == 4 and search_number.isdigit():
         # 入力された数字に一致するデータを検索
-        result = df[df['number'] == int(search_number)]
+        result = df_selected[df_selected['number'] == int(search_number)]
         
         if not result.empty:
             st.write('検索結果:')
             st.write(result[['timestamp', 'number']])
         else:
-            st.write(f'数字 {search_number} は見つかりませんでした。')
+            st.write(f'数字 {search_number} は選択された範囲内で見つかりませんでした。')
     else:
         st.error('正しい4桁の数字を入力してください。')
 
 # 各数字のtimestampごとの累積出現回数と割合
 if st.button('各数字のtimestampごとの累積出現回数と割合'):
     # 各timestampで各数字が出現したかどうかを記録
-    digit_occurrences = df.apply(lambda row: pd.Series({str(d): str(d) in row['digits'] for d in range(10)}), axis=1)
+    digit_occurrences = df_selected.apply(lambda row: pd.Series({str(d): str(d) in row['digits'] for d in range(10)}), axis=1)
     
     # 累積出現回数を計算
     cumulative_counts = digit_occurrences.cumsum()
@@ -586,7 +599,7 @@ if st.button('各数字のtimestampごとの累積出現回数と割合'):
 
 # 各数字のトータルの出現回数と割合
 if st.button('各数字のトータルの出現回数と割合'):
-    total_counts = Counter([int(digit) for digits in df['digits'] for digit in digits])
+    total_counts = Counter([int(digit) for digits in df_selected['digits'] for digit in digits])
     total_sum = sum(total_counts.values())
     
     # 割合を計算
@@ -615,7 +628,7 @@ selected_digit = st.selectbox('数字を選択してください', range(10))
 
 if st.button('選択した数字の重複回数の割合'):
     results = []
-    for timestamp, group in df.groupby('timestamp'):
+    for timestamp, group in df_selected.groupby('timestamp'):
         # 選択された数字の出現回数をカウント
         digit_counts = group['digits'].apply(lambda x: x.count(str(selected_digit)))
         
@@ -649,8 +662,8 @@ if st.button('選択した数字の重複回数の割合'):
         # 全期間での平均割合
         avg_percentages = result_df[['percentage_1', 'percentage_2', 'percentage_3', 'percentage_4']].mean()
         
-        st.write("全期間平均割合:")
+        st.write("選択範囲での平均割合:")
         for i, avg in enumerate(avg_percentages, 1):
             st.write(f"{i}回出現: {avg:.2f}%")
     else:
-        st.write(f"数字 {selected_digit} は一度も出現していません。")
+        st.write(f"数字 {selected_digit} は選択された範囲内で一度も出現していません。")
