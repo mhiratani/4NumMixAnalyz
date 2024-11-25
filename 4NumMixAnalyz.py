@@ -540,14 +540,6 @@ if st.button('検索'):
 
 # 各数字のtimestampごとの累積出現回数と割合
 if st.button('各数字のtimestampごとの累積出現回数と割合'):
-    # データの中身を確認
-    st.write("データサンプル:")
-    st.write(df.head())
-    
-    # digits列の形式を確認
-    st.write("digits列の形式:")
-    st.write(df['digits'].head())
-
     # 各timestampで各数字が出現したかどうかを記録
     digit_occurrences = df.apply(lambda row: pd.Series({str(d): str(d) in row['digits'] for d in range(10)}), axis=1)
     
