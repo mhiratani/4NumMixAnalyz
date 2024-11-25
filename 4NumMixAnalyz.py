@@ -523,7 +523,7 @@ df['digits'] = df['number'].astype(str).str.zfill(4).apply(list)
 st.title('4桁数字解析アプリ')
 
 # データ範囲の選択
-data_range_options = ['5個', '10個', '20個', '30個', '50個', '100個', '全期間']
+data_range_options = ['5個', '10個', '20個', '30個', '50個', '100個', '200個', '300個', '400個', '全期間']
 selected_range = st.selectbox('データ範囲を選択してください', data_range_options)
 
 if selected_range == '全期間':
